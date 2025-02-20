@@ -37,7 +37,7 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'movie_go_be.apps.MovieGoBeConfig',
-    'movies.apps.MovieGoMoviesConfig',
+    'movies.apps.MoviesConfig',
     'studios.apps.StudiosConfig',
     'rest_framework',
     'django.contrib.admin',
