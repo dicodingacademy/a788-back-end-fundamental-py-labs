@@ -19,9 +19,9 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('movie_go_be.urls')),
     path('api/', include('movies.urls')),
     path('api/', include('studios.urls')),
     path('api/', include('seats.urls')),
     path('api/', include('showtimes.urls')),
+    path('api/', include('reservations.urls')),
 ]

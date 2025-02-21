@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'studios.apps.StudiosConfig',
     'seats.apps.SeatsConfig',
     'showtimes.apps.ShowtimesConfig',
+    'reservations.apps.ReservationsConfig',
     'rest_framework',
     'django.contrib.admin',
     'django.contrib.auth',

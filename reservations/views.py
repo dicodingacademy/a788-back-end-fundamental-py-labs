@@ -3,8 +3,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
 from .models import Reservation, ReservedSeat
-from .serializers import ReservationSerializer, ReservedSeatSerializer
+from reservations.serializers import ReservationSerializer, ReservedSeatSerializer
 
+# Create your views here.
 class ReservationListCreateView(APIView):
     def get(self, request):
         reservations = Reservation.objects.all().order_by('reserved_at')[:10]
