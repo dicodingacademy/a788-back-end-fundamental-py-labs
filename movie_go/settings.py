@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'movie_go_be.apps.MovieGoBeConfig',
     'movies.apps.MoviesConfig',
     'studios.apps.StudiosConfig',
+    'seats.apps.SeatsConfig',
     'rest_framework',
     'django.contrib.admin',
     'django.contrib.auth',

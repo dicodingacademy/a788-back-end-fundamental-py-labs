@@ -1,12 +1,5 @@
 from rest_framework import serializers
-from .models import Seat, Showtime, Reservation, ReservedSeat
-
-class SeatSerializer(serializers.ModelSerializer):
-    studio = serializers.StringRelatedField()
-
-    class Meta:
-        model = Seat
-        fields = ['id', 'studio', 'seat_number']
+from .models import Showtime, Reservation, ReservedSeat
 
 class ShowtimeSerializer(serializers.ModelSerializer):
     movie = serializers.StringRelatedField()
