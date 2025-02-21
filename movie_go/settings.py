@@ -36,7 +36,6 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'movie_go_be.apps.MovieGoBeConfig',
     'movies.apps.MoviesConfig',
     'studios.apps.StudiosConfig',
     'seats.apps.SeatsConfig',
@@ -145,5 +144,3 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-AUTH_USER_MODEL = 'movie_go_be.User'
