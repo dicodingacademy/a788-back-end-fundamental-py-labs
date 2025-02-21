@@ -2,11 +2,10 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
-from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.contrib.auth.models import Group
 from .models import User
-from .serializers import UserSerializer
+from .serializers import UserSerializer, GroupSerializer
 
-# Create your views here.
 class UserListCreateView(APIView):
     def get(self, request):
         users = User.objects.all().order_by('username')[:10]
@@ -21,8 +20,6 @@ class UserListCreateView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserDetailView(APIView):
-    authentication_classes = [JWTAuthentication]
-
     def get(self, request, pk):
         user = get_object_or_404(User, pk=pk)
         serializer = UserSerializer(user)
@@ -40,3 +37,42 @@ class UserDetailView(APIView):
         user = get_object_or_404(User, pk=pk)
         user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class GroupListCreateView(APIView):
+    def get(self, request):
+        groups = Group.objects.all().order_by('name')[:10]
+        serializer = GroupSerializer(groups, many=True)
+        return Response({'groups': serializer.data})
+
+    def post(self, request):
+        serializer = GroupSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class GroupDetailView(APIView):
+    def get(self, request, pk):
+        group = get_object_or_404(Group, pk=pk)
+        serializer = GroupSerializer(group)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        group = get_object_or_404(Group, pk=pk)
+        serializer = GroupSerializer(group, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        group = get_object_or_404(Group, pk=pk)
+        group.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+class AssignRoleView(APIView):
+    def post(self, request):
+        user = get_object_or_404(User, pk=request.data['user_id'])
+        group = get_object_or_404(Group, pk=request.data['group_id'])
+        user.groups.add(group)
+        return Response(status=status.HTTP_201_CREATED)

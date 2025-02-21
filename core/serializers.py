@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.contrib.auth.models import Group
 from django.contrib.auth.hashers import make_password
 from .models import User
 
@@ -33,3 +34,8 @@ class UserSerializer(serializers.ModelSerializer):
             'last_name': value.last_name,
             'groups': value.groups.values_list('name', flat=True)
         }
+
+class GroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Group
+        fields = ['id', 'name']
