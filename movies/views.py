@@ -1,4 +1,5 @@
 from rest_framework import status
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -6,7 +7,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.shortcuts import get_object_or_404
 from core.permissions import IsAdminOrSuperUser
 from .models import Movie
-from .serializers import MovieSerializer
+from .serializers import MovieSerializer, UploadSerializer
 
 # Create your views here.
 class MovieListCreateView(APIView):
@@ -54,3 +55,17 @@ class MovieDetailView(APIView):
         movie = get_object_or_404(Movie, pk=pk)
         movie.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class MovieUploadView(APIView):
+    authentication_classes = [JWTAuthentication]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get_permissions(self):
+        return [IsAuthenticated(), IsAdminOrSuperUser()]
+
+    def post(self, request):
+        serializer = UploadSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
