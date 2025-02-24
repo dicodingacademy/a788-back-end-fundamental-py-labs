@@ -1,6 +1,5 @@
 import os
 import tempfile
-from datetime import timedelta
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
@@ -30,6 +29,8 @@ class MovieListCreateView(APIView):
             return [IsAuthenticated(), IsAdminOrSuperUser()]
         return [IsAuthenticated()]
 
+
+    @method_decorator(cache_page(60 * 60 * 2))
     def get(self, request):
         movies = Movie.objects.all().order_by('name')[:10]
         serializer = MovieSerializer(movies, many=True)
