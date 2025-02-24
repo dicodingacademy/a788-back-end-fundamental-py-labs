@@ -1,3 +1,6 @@
+import os
+import tempfile
+from datetime import timedelta
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
@@ -7,7 +10,16 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.shortcuts import get_object_or_404
 from core.permissions import IsAdminOrSuperUser
 from .models import Movie
-from .serializers import MovieSerializer, UploadSerializer
+from .serializers import MovieSerializer, MovieImageSerializer
+from minio import Minio
+
+minioClient = Minio(
+    "storage.googleapis.com",
+    access_key=os.getenv('GCS_ACCESS_KEY'),
+    secret_key=os.getenv('GCS_SECRET_KEY'),
+)
+
+bucket_name = os.getenv('MINIO_BUCKET_NAME')
 
 # Create your views here.
 class MovieListCreateView(APIView):
@@ -64,8 +76,46 @@ class MovieUploadView(APIView):
         return [IsAuthenticated(), IsAdminOrSuperUser()]
 
     def post(self, request):
-        serializer = UploadSerializer(data=request.data)
+        serializer = MovieImageSerializer(data=request.data)
+        file = request.data.get('image')
+
         if serializer.is_valid():
             serializer.save()
+
+            # Simpan file sementara sebelum upload ke Minio
+            with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+                for chunk in file.chunks():
+                    temp_file.write(chunk)
+                temp_file_path = temp_file.name
+
+            try:
+                object_name = f"{serializer.instance.image.name}"
+                minioClient.fput_object(bucket_name, object_name, temp_file_path, content_type=file.content_type)
+            except Exception as e:
+                return Response(
+                    {"error": f"Upload to Minio failed: {str(e)}"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            finally:
+                os.remove(temp_file_path)
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class MovieImageView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        movie = get_object_or_404(Movie, pk=pk)
+        images = movie.movieimage_set.all()
+
+        serialized_images = []
+        for image in images:
+            presigned_url = minioClient.presigned_get_object(
+                bucket_name,
+                image.image.name,
+                response_headers={"response-content-type": "image/jpeg"}
+            )
+            serialized_images.append({"id": image.id, "url": presigned_url})
+
+        return Response(serialized_images)

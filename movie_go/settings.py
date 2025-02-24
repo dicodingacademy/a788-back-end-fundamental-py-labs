@@ -142,8 +142,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = BASE_DIR
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -164,15 +163,11 @@ SIMPLE_JWT = {
 }
 
 STORAGES = {
-    "minio": {
-        "BACKEND": "storages.backends.s3.S3Storage",
-        "OPTIONS": {
-            "bucket_name": os.getenv('MINIO_BUCKET_NAME'),
-            "endpoint_url": os.getenv('MINIO_ENDPOINT_URL'),
-            "access_key": os.getenv('MINIO_ACCESS_KEY'),
-            "secret_key": os.getenv('MINIO_SECRET_KEY'),
-            "default_acl": "private",
-            "signature_version": "s3v4",
-        },
+    "default": {
+        "BACKEND": "django.core.files.storage.InMemoryStorage",
+    },
+
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }

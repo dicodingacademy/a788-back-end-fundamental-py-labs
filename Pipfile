@@ -9,9 +9,7 @@ psycopg = "*"
 python-dotenv = "*"
 djangorestframework = "*"
 djangorestframework-simplejwt = "*"
-pillow = "*"
-django-storages = "*"
-boto3 = "*"
+minio = "*"
 
 [dev-packages]
 
