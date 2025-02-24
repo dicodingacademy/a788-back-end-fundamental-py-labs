@@ -10,6 +10,7 @@ python-dotenv = "*"
 djangorestframework = "*"
 djangorestframework-simplejwt = "*"
 minio = "*"
+redis = "*"
 
 [dev-packages]
 
