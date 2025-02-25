@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404
 from core.permissions import IsAdminOrSuperUser
 from .models import Reservation, ReservedSeat
 from reservations.serializers import ReservationSerializer, ReservedSeatSerializer
+from .tasks import send_ticket_email
 
 # Create your views here.
 class ReservationListCreateView(APIView):
@@ -26,8 +27,10 @@ class ReservationListCreateView(APIView):
     def post(self, request):
         serializer = ReservationSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            reservation = serializer.save()
+            send_ticket_email.delay(reservation.user.email, reservation.user.username, reservation.id)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ReservationDetailView(APIView):
