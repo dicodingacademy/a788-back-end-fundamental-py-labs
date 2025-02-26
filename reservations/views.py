@@ -8,6 +8,7 @@ from core.permissions import IsAdminOrSuperUser
 from .models import Reservation, ReservedSeat
 from reservations.serializers import ReservationSerializer, ReservedSeatSerializer
 from .tasks import send_ticket_email
+import logging
 
 # Create your views here.
 class ReservationListCreateView(APIView):
@@ -29,6 +30,7 @@ class ReservationListCreateView(APIView):
         if serializer.is_valid():
             reservation = serializer.save()
             send_ticket_email.delay(reservation.user.email, reservation.user.username, reservation.id)
+            logging.info(f"Reservation {reservation.id} created by {reservation.user.username}")
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -57,6 +59,7 @@ class ReservationDetailView(APIView):
     def delete(self, request, pk):
         reservation = get_object_or_404(Reservation, pk=pk)
         reservation.delete()
+        logging.info(f"Reservation {reservation.id} deleted by {reservation.user.username}")
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class ReservedSeatListCreateView(APIView):
@@ -72,6 +75,7 @@ class ReservedSeatListCreateView(APIView):
         serializer = ReservedSeatSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
+            logging.info(f"Reserved seat {serializer.data['id']} created")
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
