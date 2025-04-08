@@ -5,8 +5,6 @@ name = "pypi"
 
 [packages]
 django = "==4.2"
-psycopg = "*"
-python-dotenv = "*"
 djangorestframework = "*"
 
 [dev-packages]
