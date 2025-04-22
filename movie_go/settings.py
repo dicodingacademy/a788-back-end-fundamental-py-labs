@@ -37,7 +37,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'core.apps.AuthConfig',
+    'core.apps.CoreConfig',
     'movies.apps.MoviesConfig',
     'studios.apps.StudiosConfig',
     'seats.apps.SeatsConfig',
