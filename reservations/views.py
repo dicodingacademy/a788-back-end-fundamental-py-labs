@@ -1,9 +1,9 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.shortcuts import get_object_or_404
 from .models import Reservation, ReservedSeat
 from reservations.serializers import ReservationSerializer, ReservedSeatSerializer
+from django.http import Http404
 
 # Create your views here.
 class ReservationListCreateView(APIView):
@@ -20,13 +20,21 @@ class ReservationListCreateView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ReservationDetailView(APIView):
+    def get_object(self, pk):
+        try:
+            reservation = Reservation.objects.get(pk=pk)
+            self.check_object_permissions(self.request, reservation)
+            return reservation
+        except Reservation.DoesNotExist:
+            raise Http404
+
     def get(self, request, pk):
-        reservation = get_object_or_404(Reservation, pk=pk)
+        reservation = self.get_object(pk)
         serializer = ReservationSerializer(reservation)
         return Response(serializer.data)
 
     def put(self, request, pk):
-        reservation = get_object_or_404(Reservation, pk=pk)
+        reservation = self.get_object(pk)
         serializer = ReservationSerializer(reservation, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -34,7 +42,7 @@ class ReservationDetailView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
-        reservation = get_object_or_404(Reservation, pk=pk)
+        reservation = self.get_object(pk)
         reservation.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -52,13 +60,21 @@ class ReservedSeatListCreateView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ReservedSeatDetailView(APIView):
+    def get_object(self, pk):
+        try:
+            reserved_seat = ReservedSeat.objects.get(pk=pk)
+            self.check_object_permissions(self.request, reserved_seat)
+            return reserved_seat
+        except ReservedSeat.DoesNotExist:
+            raise Http404
+
     def get(self, request, pk):
-        reserved_seat = get_object_or_404(ReservedSeat, pk=pk)
+        reserved_seat = self.get_object(pk)
         serializer = ReservedSeatSerializer(reserved_seat)
         return Response(serializer.data)
 
     def put(self, request, pk):
-        reserved_seat = get_object_or_404(ReservedSeat, pk=pk)
+        reserved_seat = self.get_object(pk)
         serializer = ReservedSeatSerializer(reserved_seat, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -66,6 +82,6 @@ class ReservedSeatDetailView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
-        reserved_seat = get_object_or_404(ReservedSeat, pk=pk)
+        reserved_seat = self.get_object(pk)
         reserved_seat.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

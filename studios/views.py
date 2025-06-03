@@ -1,9 +1,9 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.shortcuts import get_object_or_404
 from .models import Studio, StudioManager
 from .serializers import StudioSerializer, StudioManagerSerializer
+from django.http import Http404
 
 # Create your views here.
 class StudioListCreateView(APIView):
@@ -20,13 +20,21 @@ class StudioListCreateView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class StudioDetailView(APIView):
+    def get_object(self, pk):
+        try:
+            studio = Studio.objects.get(pk=pk)
+            self.check_object_permissions(self.request, studio)
+            return studio
+        except Studio.DoesNotExist:
+            raise Http404
+
     def get(self, request, pk):
-        studio = get_object_or_404(Studio, pk=pk)
+        studio = self.get_object(pk)
         serializer = StudioSerializer(studio)
         return Response(serializer.data)
 
     def put(self, request, pk):
-        studio = get_object_or_404(Studio, pk=pk)
+        studio = self.get_object(pk)
         serializer = StudioSerializer(studio, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -34,7 +42,7 @@ class StudioDetailView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
-        studio = get_object_or_404(Studio, pk=pk)
+        studio = self.get_object(pk)
         studio.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -52,13 +60,21 @@ class StudioManagerListCreateView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class StudioManagerDetailView(APIView):
+    def get_object(self, pk):
+        try:
+            studio_manager = StudioManager.objects.get(pk=pk)
+            self.check_object_permissions(self.request, studio_manager)
+            return studio_manager
+        except StudioManager.DoesNotExist:
+            raise Http404
+
     def get(self, request, pk):
-        studio_manager = get_object_or_404(StudioManager, pk=pk)
+        studio_manager = self.get_object(pk)
         serializer = StudioManagerSerializer(studio_manager)
         return Response(serializer.data)
 
     def put(self, request, pk):
-        studio_manager = get_object_or_404(StudioManager, pk=pk)
+        studio_manager = self.get_object(pk)
         serializer = StudioManagerSerializer(studio_manager, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -66,6 +82,6 @@ class StudioManagerDetailView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
-        studio_manager = get_object_or_404(StudioManager, pk=pk)
+        studio_manager = self.get_object(pk)
         studio_manager.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
