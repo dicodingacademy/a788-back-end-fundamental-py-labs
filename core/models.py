@@ -8,3 +8,6 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
+
+    class Meta:
+        db_table = 'users'
