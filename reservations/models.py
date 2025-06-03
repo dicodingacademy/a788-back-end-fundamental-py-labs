@@ -12,6 +12,9 @@ class Reservation(models.Model):
     amount = models.IntegerField()
     reserved_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        db_table = 'reservations'
+
     def __str__(self):
         return f'{self.user.username} - {self.showtime}'
 
