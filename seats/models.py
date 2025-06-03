@@ -9,6 +9,7 @@ class Seat(models.Model):
     seat_number = models.CharField(max_length=10)
 
     class Meta:
+        db_table = 'seats'
         unique_together = ('studio', 'seat_number')
 
     def __str__(self):
