@@ -1,17 +1,45 @@
 from rest_framework import serializers
-from .models import Seat
+from rest_framework.reverse import reverse
+from .models import Seat, Studio
 
-class SeatSerializer(serializers.ModelSerializer):
+class SeatSerializer(serializers.HyperlinkedModelSerializer):
+    _links = serializers.SerializerMethodField()
+    studio = serializers.CharField(source='studio.name', read_only=True)
+    studio_id = serializers.PrimaryKeyRelatedField(
+        queryset=Studio.objects.all(),
+        write_only=True,
+        source='studio'
+    )
+
     class Meta:
         model = Seat
-        fields = ['id', 'studio', 'seat_number']
+        fields = ['id', 'studio', 'studio_id', 'seat_number', '_links']
 
-    def to_representation(self, value):
-        """
-        Override the to_representation method to return the studio's name.
-        """
-        return {
-            'id': value.id,
-            'studio': value.studio.name,
-            'seat_number': value.seat_number
-        }
+    def get__links(self, obj):
+        request = self.context.get('request')
+        return [
+            {
+                "rel": "self",
+                "href": reverse('seat-list', request=request),
+                "action": "POST",
+                "types": ["application/json"]
+            },
+            {
+                "rel": "self",
+                "href": reverse('seat-detail', kwargs={'pk': obj.pk}, request=request),
+                "action": "GET",
+                "types": ["application/json"]
+            },
+            {
+                "rel": "self",
+                "href": reverse('seat-detail', kwargs={'pk': obj.pk}, request=request),
+                "action": "PUT",
+                "types": ["application/json"]
+            },
+            {
+                "rel": "self",
+                "href": reverse('seat-detail', kwargs={'pk': obj.pk}, request=request),
+                "action": "DELETE",
+                "types": ["application/json"]
+            }
+        ]
