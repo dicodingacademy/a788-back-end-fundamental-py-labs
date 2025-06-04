@@ -12,6 +12,7 @@ class Showtime(models.Model):
     end_time = models.DateTimeField()
 
     class Meta:
+        db_table = 'showtimes'
         unique_together = ('movie', 'studio', 'start_time')
 
     def __str__(self):
