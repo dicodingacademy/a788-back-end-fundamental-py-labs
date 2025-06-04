@@ -1,41 +1,92 @@
 from rest_framework import serializers
-from django.contrib.auth.models import Group
+from rest_framework.reverse import reverse
 from django.contrib.auth.hashers import make_password
-from .models import User
+from django.contrib.auth.models import Group
+from core.models import User
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.HyperlinkedModelSerializer):
+    _links = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'password']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'password', '_links']
+        extra_kwargs = {
+            'password': {'write_only': True}
+        }
 
     def create(self, validated_data):
         """
-        Override the create method to hash the password.
+        Override create method to hash password and create user.
         """
         password = validated_data.pop('password')
-        hashed_password = make_password(password)
+        validated_data['password'] = make_password(password)
+        return User.objects.create(**validated_data)
 
-        user = User.objects.create(
-            username=validated_data['username'],
-            password=hashed_password
-        )
+    def get__links(self, obj):
+        request = self.context.get('request')
+        return [
+            {
+                "rel": "self",
+                "href": reverse('user-list', request=request),
+                "action": "POST",
+                "types": ["application/json"]
+            },
+            {
+                "rel": "self",
+                "href": reverse('user-detail', kwargs={'pk': obj.pk}, request=request),
+                "action": "GET",
+                "types": ["application/json"]
+            },
+            {
+                "rel": "self",
+                "href": reverse('user-detail', kwargs={'pk': obj.pk}, request=request),
+                "action": "PUT",
+                "types": ["application/json"]
+            },
+            {
+                "rel": "self",
+                "href": reverse('user-detail', kwargs={'pk': obj.pk}, request=request),
+                "action": "DELETE",
+                "types": ["application/json"]
+            }
+        ]
 
-        return user
+class GroupSerializer(serializers.HyperlinkedModelSerializer):
+    _links = serializers.SerializerMethodField()
 
-    def to_representation(self, value):
-        """
-        Override the to_representation method to return the user's groups.
-        """
-        return {
-            'id': value.id,
-            'username': value.username,
-            'email': value.email,
-            'first_name': value.first_name,
-            'last_name': value.last_name,
-            'groups': value.groups.values_list('name', flat=True)
-        }
-
-class GroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
-        fields = ['id', 'name']
+        fields = ['id', 'name', '_links']
+
+    def get__links(self, obj):
+        request = self.context.get('request')
+        return [
+            {
+                "rel": "self",
+                "href": reverse('group-list', request=request),
+                "action": "POST",
+                "types": ["application/json"]
+            },
+            {
+                "rel": "self",
+                "href": reverse('group-detail', kwargs={'pk': obj.pk}, request=request),
+                "action": "GET",
+                "types": ["application/json"]
+            },
+            {
+                "rel": "self",
+                "href": reverse('group-detail', kwargs={'pk': obj.pk}, request=request),
+                "action": "PUT",
+                "types": ["application/json"]
+            },
+            {
+                "rel": "self",
+                "href": reverse('group-detail', kwargs={'pk': obj.pk}, request=request),
+                "action": "DELETE",
+                "types": ["application/json"]
+            }
+        ]
+
+class AssignRoleSerializer(serializers.Serializer):
+    user_id = serializers.IntegerField()
+    group_id = serializers.IntegerField()
