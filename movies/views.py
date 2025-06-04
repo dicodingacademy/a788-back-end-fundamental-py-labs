@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.http import Http404
+from django.shortcuts import get_object_or_404
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from core.permissions import IsAdminOrSuperUser
 from .models import Movie
@@ -13,9 +14,10 @@ from .serializers import MovieSerializer, MovieImageSerializer
 from minio import Minio
 
 minioClient = Minio(
-    "storage.googleapis.com",
-    access_key=os.getenv('GCS_ACCESS_KEY'),
-    secret_key=os.getenv('GCS_SECRET_KEY'),
+endpoint=os.getenv('MINIO_ENDPOINT_URL'),
+    access_key=os.getenv('MINIO_ACCESS_KEY'),
+    secret_key=os.getenv('MINIO_SECRET_KEY'),
+    secure= False
 )
 
 bucket_name = os.getenv('MINIO_BUCKET_NAME')
@@ -29,8 +31,6 @@ class MovieListCreateView(APIView):
             return [IsAuthenticated(), IsAdminOrSuperUser()]
         return [IsAuthenticated()]
 
-
-    @method_decorator(cache_page(60 * 60 * 2))
     def get(self, request):
         movies = Movie.objects.all().order_by('name')[:10]
         serializer = MovieSerializer(movies, many=True)
