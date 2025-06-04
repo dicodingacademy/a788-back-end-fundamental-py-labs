@@ -1,26 +1,30 @@
+import json
 import os
 import tempfile
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.http import Http404
 from django.shortcuts import get_object_or_404
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from core.permissions import IsAdminOrSuperUser
 from .models import Movie
 from .serializers import MovieSerializer, MovieImageSerializer
 from minio import Minio
+from django.core.cache import cache
 
 minioClient = Minio(
-    "storage.googleapis.com",
-    access_key=os.getenv('GCS_ACCESS_KEY'),
-    secret_key=os.getenv('GCS_SECRET_KEY'),
+endpoint=os.getenv('MINIO_ENDPOINT_URL'),
+    access_key=os.getenv('MINIO_ACCESS_KEY'),
+    secret_key=os.getenv('MINIO_SECRET_KEY'),
+    secure= False
 )
 
 bucket_name = os.getenv('MINIO_BUCKET_NAME')
+CACHE_KEY_LIST = "movie_list"
+CACHE_KEY_DETAIL = "movie_detail_{}"
 
 # Create your views here.
 class MovieListCreateView(APIView):
@@ -31,20 +35,50 @@ class MovieListCreateView(APIView):
             return [IsAuthenticated(), IsAdminOrSuperUser()]
         return [IsAuthenticated()]
 
-    @method_decorator(cache_page(60 * 60 * 2))
     def get(self, request):
-        movies = Movie.objects.all().order_by('name')[:10]
-        serializer = MovieSerializer(movies, many=True)
-        return Response({'movies': serializer.data})
+        movies = cache.get(CACHE_KEY_LIST)
+
+        # Jika tidak ada di cache, ambil dari database
+        if not movies:
+            print("Data diambil dari database...")
+            data = Movie.objects.all().order_by('name')[:10]
+            cache.get(CACHE_KEY_LIST)
+            serializer = MovieSerializer(data, many=True)
+
+            # Serialisasi data ke JSON string
+            movies_data = json.dumps(serializer.data)
+
+            # Simpan di Redis selama 15 menit
+            cache.set(CACHE_KEY_LIST, movies_data, timeout=60 * 15)
+
+            movies = movies_data
+            data_source = "database"
+        else:
+            print("Data diambil dari cache...")
+            data_source = "cache"
+
+        # Kembalikan hasil response dalam bentuk JSON
+        response = Response({'movies': json.loads(movies)})
+        response['X-Data-Source'] = data_source
+        return response
 
     def post(self, request):
         serializer = MovieSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
+            cache.delete(CACHE_KEY_LIST)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class MovieDetailView(APIView):
+    def get_object(self, pk):
+        try:
+            movie = Movie.objects.get(pk=pk)
+            self.check_object_permissions(self.request, movie)
+            return movie
+        except Movie.DoesNotExist:
+            raise Http404
+
     authentication_classes = [JWTAuthentication]
 
     def get_permissions(self):
@@ -53,12 +87,12 @@ class MovieDetailView(APIView):
         return [IsAuthenticated()]
 
     def get(self, request, pk):
-        movie = get_object_or_404(Movie, pk=pk)
+        movie = self.get_object(pk)
         serializer = MovieSerializer(movie)
         return Response(serializer.data)
 
     def put(self, request, pk):
-        movie = get_object_or_404(Movie, pk=pk)
+        movie = self.get_object(pk)
         serializer = MovieSerializer(movie, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -66,7 +100,7 @@ class MovieDetailView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
-        movie = get_object_or_404(Movie, pk=pk)
+        movie = self.get_object(pk)
         movie.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
