@@ -18,10 +18,8 @@ def send_ticket_email(user_email, username, reservation_id):
 
     Kami tunggu kedatangan Anda di Cinema, selamat menonton!
 
-    Terima kasih,
-    Tim Movie Go
-
     Pesan ini dikirim secara otomatis. Mohon tidak membalas pesan ini.
+    - Movie Go Team
     """
 
     # HTML formatted version
