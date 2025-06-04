@@ -7,17 +7,19 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.http import Http404
 from django.shortcuts import get_object_or_404
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from core.permissions import IsAdminOrSuperUser
 from .models import Movie
 from .serializers import MovieSerializer, MovieImageSerializer
 from minio import Minio
 
 minioClient = Minio(
-    "storage.googleapis.com",
-    access_key=os.getenv('GCS_ACCESS_KEY'),
-    secret_key=os.getenv('GCS_SECRET_KEY'),
+endpoint=os.getenv('MINIO_ENDPOINT_URL'),
+    access_key=os.getenv('MINIO_ACCESS_KEY'),
+    secret_key=os.getenv('MINIO_SECRET_KEY'),
+    secure= False
 )
 
 bucket_name = os.getenv('MINIO_BUCKET_NAME')
@@ -45,6 +47,14 @@ class MovieListCreateView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class MovieDetailView(APIView):
+    def get_object(self, pk):
+        try:
+            movie = Movie.objects.get(pk=pk)
+            self.check_object_permissions(self.request, movie)
+            return movie
+        except Movie.DoesNotExist:
+            raise Http404
+
     authentication_classes = [JWTAuthentication]
 
     def get_permissions(self):
@@ -53,12 +63,12 @@ class MovieDetailView(APIView):
         return [IsAuthenticated()]
 
     def get(self, request, pk):
-        movie = get_object_or_404(Movie, pk=pk)
+        movie = self.get_object(pk)
         serializer = MovieSerializer(movie)
         return Response(serializer.data)
 
     def put(self, request, pk):
-        movie = get_object_or_404(Movie, pk=pk)
+        movie = self.get_object(pk)
         serializer = MovieSerializer(movie, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -66,7 +76,7 @@ class MovieDetailView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
-        movie = get_object_or_404(Movie, pk=pk)
+        movie = self.get_object(pk)
         movie.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
