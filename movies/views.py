@@ -14,6 +14,7 @@ from .models import Movie
 from .serializers import MovieSerializer, MovieImageSerializer
 from minio import Minio
 from django.core.cache import cache
+from loguru import logger
 
 minioClient = Minio(
 endpoint=os.getenv('MINIO_ENDPOINT_URL'),
@@ -67,6 +68,7 @@ class MovieListCreateView(APIView):
         if serializer.is_valid():
             serializer.save()
             cache.delete(CACHE_KEY_LIST)
+            logger.info("Creating a new movie with data: {}", request.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -96,12 +98,14 @@ class MovieDetailView(APIView):
         serializer = MovieSerializer(movie, data=request.data)
         if serializer.is_valid():
             serializer.save()
+            logger.info("Updating movie with ID {} with data: {}", pk, request.data)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
         movie = self.get_object(pk)
         movie.delete()
+        logger.info("Deleting movie with ID {}", pk)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class MovieUploadView(APIView):

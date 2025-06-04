@@ -12,6 +12,7 @@ djangorestframework-simplejwt = "*"
 minio = "*"
 redis = "*"
 celery = "*"
+loguru = "*"
 
 [dev-packages]
 

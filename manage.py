@@ -2,9 +2,16 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
+from loguru import logger
 
 
 def main():
+    logger.remove()  # hapus handler bawaan
+    logger.add(sys.stdout, level="INFO")  # log ke console
+    logger.add("logs/app.log",  # log ke file
+               rotation="1 day",  # rotasi harian
+               level="INFO")
+
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'movie_go.settings')
     try:
