@@ -14,7 +14,6 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 from datetime import timedelta
-import sentry_sdk
 
 # Load environment variables from .env file
 load_dotenv()
