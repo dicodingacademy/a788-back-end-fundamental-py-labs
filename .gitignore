@@ -14,3 +14,4 @@ reservations/migrations/__pypycache__
 core/__pycache__
 core/migrations/__pycache__
 logs/app.log
+logs/error.log
