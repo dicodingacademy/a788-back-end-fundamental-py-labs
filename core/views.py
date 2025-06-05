@@ -9,6 +9,7 @@ from core.permissions import IsAdminOrSuperUser, IsOwnerOrAdminOrSuperUser
 from .models import User
 from .serializers import UserSerializer, GroupSerializer
 from django.http import Http404
+from loguru import logger
 
 class UserListCreateView(APIView):
     authentication_classes = [JWTAuthentication]
@@ -27,6 +28,7 @@ class UserListCreateView(APIView):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
+            logger.info("Creating a new user with data: {}", request.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -44,6 +46,7 @@ class UserDetailView(APIView):
             self.check_object_permissions(self.request, user)
             return user
         except User.DoesNotExist:
+            logger.info("User with ID {} not found", pk)
             raise Http404
 
     def get(self, request, pk):
@@ -56,12 +59,14 @@ class UserDetailView(APIView):
         serializer = UserSerializer(user, data=request.data)
         if serializer.is_valid():
             serializer.save()
+            logger.info("Updating user with ID {} with data: {}", pk, request.data)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
         user = self.get_object(pk)
         user.delete()
+        logger.info("Deleting user with ID {}", pk)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -78,6 +83,7 @@ class GroupListCreateView(APIView):
         serializer = GroupSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
+            logger.info("Creating a new group with data: {}", request.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -103,12 +109,14 @@ class GroupDetailView(APIView):
         serializer = GroupSerializer(group, data=request.data)
         if serializer.is_valid():
             serializer.save()
+            logger.info("Updating group with ID {} with data: {}", pk, request.data)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
         group = self.get_object(pk)
         group.delete()
+        logger.info("Deleting group with ID {}", pk)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class AssignRoleView(APIView):
@@ -119,4 +127,5 @@ class AssignRoleView(APIView):
         user = get_object_or_404(User, pk=request.data['user_id'])
         group = get_object_or_404(Group, pk=request.data['group_id'])
         user.groups.add(group)
+        logger.info("Assigned group {} to user {}", group.name, user.username)
         return Response(status=status.HTTP_201_CREATED)

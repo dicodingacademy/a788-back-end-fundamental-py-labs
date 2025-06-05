@@ -79,6 +79,7 @@ class MovieDetailView(APIView):
             self.check_object_permissions(self.request, movie)
             return movie
         except Movie.DoesNotExist:
+            logger.info("Movie with ID {} not found", pk)
             raise Http404
 
     authentication_classes = [JWTAuthentication]
@@ -132,6 +133,7 @@ class MovieUploadView(APIView):
                 object_name = f"{serializer.instance.image.name}"
                 minioClient.fput_object(bucket_name, object_name, temp_file_path, content_type=file.content_type)
             except Exception as e:
+                logger.error(f"Upload to Minio failed: {str(e)}")
                 return Response(
                     {"error": f"Upload to Minio failed: {str(e)}"},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR)

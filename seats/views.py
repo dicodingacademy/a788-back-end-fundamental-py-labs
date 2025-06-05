@@ -7,6 +7,7 @@ from .models import Seat
 from .serializers import SeatSerializer
 from core.permissions import IsAdminOrStudioManagerOrSuperUser
 from django.http import Http404
+from loguru import logger
 
 # Create your views here.
 class SeatListCreateView(APIView):
@@ -26,6 +27,7 @@ class SeatListCreateView(APIView):
         serializer = SeatSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
+            logger.info(f"Seat {serializer.validated_data['seat_number']} created by {request.user.username}")
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -43,6 +45,7 @@ class SeatDetailView(APIView):
             self.check_object_permissions(self.request, seat)
             return seat
         except Seat.DoesNotExist:
+            logger.info(f"Seat with ID {pk} not found")
             raise Http404
 
     def get(self, request, pk):
@@ -55,10 +58,12 @@ class SeatDetailView(APIView):
         serializer = SeatSerializer(seat, data=request.data)
         if serializer.is_valid():
             serializer.save()
+            logger.info(f"Updating seat {serializer.validated_data['seat_number']} with data: {request.data}")
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
         seat = self.get_object(pk)
         seat.delete()
+        logger.info(f"Deleting seat with ID {pk}")
         return Response(status=status.HTTP_204_NO_CONTENT)

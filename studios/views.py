@@ -7,6 +7,7 @@ from core.permissions import IsAdminOrStudioManagerOrSuperUser, IsAdminOrSuperUs
 from .models import Studio, StudioManager
 from .serializers import StudioSerializer, StudioManagerSerializer
 from django.http import Http404
+from loguru import logger
 
 # Create your views here.
 class StudioListCreateView(APIView):
@@ -26,6 +27,7 @@ class StudioListCreateView(APIView):
         serializer = StudioSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
+            logger.info(f"Studio '{serializer.validated_data['name']}' created by {request.user.username}")
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -36,6 +38,7 @@ class StudioDetailView(APIView):
             self.check_object_permissions(self.request, studio)
             return studio
         except Studio.DoesNotExist:
+            logger.info(f"Studio with ID {pk} not found")
             raise Http404
 
     authentication_classes = [JWTAuthentication]
@@ -55,12 +58,14 @@ class StudioDetailView(APIView):
         serializer = StudioSerializer(studio, data=request.data)
         if serializer.is_valid():
             serializer.save()
+            logger.info(f"Studio '{serializer.validated_data['name']}' updated by {request.user.username}")
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
         studio = self.get_object(pk)
         studio.delete()
+        logger.info(f"Studio with ID {pk} deleted by {request.user.username}")
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class StudioManagerListCreateView(APIView):
@@ -76,6 +81,7 @@ class StudioManagerListCreateView(APIView):
         serializer = StudioManagerSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
+            logger.info(f"Studio Manager '{serializer.validated_data['user'].username}' created for studio '{serializer.validated_data['studio'].name}'")
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -89,6 +95,7 @@ class StudioManagerDetailView(APIView):
             self.check_object_permissions(self.request, studio_manager)
             return studio_manager
         except StudioManager.DoesNotExist:
+            logger.info(f"Studio Manager with ID {pk} not found")
             raise Http404
 
     def get(self, request, pk):
@@ -101,10 +108,12 @@ class StudioManagerDetailView(APIView):
         serializer = StudioManagerSerializer(studio_manager, data=request.data)
         if serializer.is_valid():
             serializer.save()
+            logger.info(f"Studio Manager '{serializer.validated_data['user'].username}' updated for studio '{serializer.validated_data['studio'].name}'")
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
         studio_manager = self.get_object(pk)
         studio_manager.delete()
+        logger.info(f"Studio Manager with ID {pk} deleted")
         return Response(status=status.HTTP_204_NO_CONTENT)

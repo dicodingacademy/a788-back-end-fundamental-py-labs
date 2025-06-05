@@ -8,7 +8,7 @@ from core.permissions import IsAdminOrSuperUser
 from .models import Reservation, ReservedSeat
 from reservations.serializers import ReservationSerializer, ReservedSeatSerializer
 from .tasks import send_ticket_email
-import logging
+from loguru import logger
 
 # Create your views here.
 class ReservationListCreateView(APIView):
@@ -28,8 +28,9 @@ class ReservationListCreateView(APIView):
         serializer = ReservationSerializer(data=request.data)
         if serializer.is_valid():
             reservation = serializer.save()
+            logger.info(f"Reservation {reservation.id} created by {reservation.user.username}")
             send_ticket_email.delay(reservation.user.email, reservation.user.username, reservation.id)
-            logging.info(f"Reservation {reservation.id} created by {reservation.user.username}")
+            logger.info(f"Sending ticket email to {reservation.user.email} for reservation {reservation.id}")
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -48,6 +49,7 @@ class ReservationDetailView(APIView):
             self.check_object_permissions(self.request, reservation)
             return reservation
         except Reservation.DoesNotExist:
+            logger.info(f"Reservation with ID {pk} not found")
             raise Http404
 
     def get(self, request, pk):
@@ -60,13 +62,14 @@ class ReservationDetailView(APIView):
         serializer = ReservationSerializer(reservation, data=request.data)
         if serializer.is_valid():
             serializer.save()
+            logger.info(f"Reservation {reservation.id} updated by {reservation.user.username}")
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
         reservation = self.get_object(pk)
         reservation.delete()
-        logging.info(f"Reservation {reservation.id} deleted by {reservation.user.username}")
+        logger.info(f"Reservation {reservation.id} deleted by {reservation.user.username}")
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class ReservedSeatListCreateView(APIView):
@@ -82,7 +85,7 @@ class ReservedSeatListCreateView(APIView):
         serializer = ReservedSeatSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            logging.info(f"Reserved seat {serializer.data['id']} created")
+            logger.info(f"Reserved seat {serializer.data['id']} created for reservation {serializer.data['reservation']}")
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -96,6 +99,7 @@ class ReservedSeatDetailView(APIView):
             self.check_object_permissions(self.request, reserved_seat)
             return reserved_seat
         except ReservedSeat.DoesNotExist:
+            logger.info(f"Reserved seat with ID {pk} not found")
             raise Http404
 
     def get(self, request, pk):
@@ -108,10 +112,12 @@ class ReservedSeatDetailView(APIView):
         serializer = ReservedSeatSerializer(reserved_seat, data=request.data)
         if serializer.is_valid():
             serializer.save()
+            logger.info(f"Reserved seat {reserved_seat.id} updated for reservation {reserved_seat.reservation.id}")
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
         reserved_seat = self.get_object(pk)
         reserved_seat.delete()
+        logger.info(f"Reserved seat {reserved_seat.id} deleted for reservation {reserved_seat.reservation.id}")
         return Response(status=status.HTTP_204_NO_CONTENT)
