@@ -8,9 +8,14 @@ from loguru import logger
 def main():
     logger.remove()  # hapus handler bawaan
     logger.add(sys.stdout, level="INFO")  # log ke console
-    logger.add("logs/app.log",  # log ke file
+    logger.add("logs/error.log",
+               rotation="500 MB",  # rotasi file jika mencapai 500 MB)
+               level="ERROR",  # hanya log level error
+               backtrace=True,
+               diagnose=True)  #
+    logger.add("logs/app.log",
                rotation="1 day",  # rotasi harian
-               level="INFO")
+               level="INFO") # hanya log level info
 
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'movie_go.settings')
