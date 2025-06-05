@@ -18,7 +18,7 @@ def main():
                level="INFO") # hanya log level info
 
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'movie_go.settings')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'movie_go.settings.dev')
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
