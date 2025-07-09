@@ -11,7 +11,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from core.permissions import IsAdminOrSuperUser
 from .models import Movie
-from .serializers import MovieSerializer, MovieImageSerializer
+from .serializers import MovieSerializer, MoviePosterSerializer
 from minio import Minio
 from django.core.cache import cache
 from loguru import logger
@@ -111,7 +111,7 @@ class MovieDetailView(APIView):
         logger.info("Deleting movie with ID {}", pk)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-class MovieUploadView(APIView):
+class MoviePosterView(APIView):
     authentication_classes = [JWTAuthentication]
     parser_classes = [MultiPartParser, FormParser]
 
@@ -119,7 +119,7 @@ class MovieUploadView(APIView):
         return [IsAuthenticated(), IsAdminOrSuperUser()]
 
     def post(self, request):
-        serializer = MovieImageSerializer(data=request.data)
+        serializer = MoviePosterSerializer(data=request.data)
         file = request.data.get('image')
 
         if serializer.is_valid():
@@ -146,7 +146,7 @@ class MovieUploadView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class MovieImageView(APIView):
+class MoviePosterDetailView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
