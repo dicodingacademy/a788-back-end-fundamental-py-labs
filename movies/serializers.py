@@ -39,7 +39,7 @@ class MovieSerializer(serializers.HyperlinkedModelSerializer):
             }
         ]
 
-class MovieImageSerializer(serializers.ModelSerializer):
+class MoviePosterSerializer(serializers.ModelSerializer):
     class Meta:
         model = MovieImage
         fields = ['id', 'movie', 'image']

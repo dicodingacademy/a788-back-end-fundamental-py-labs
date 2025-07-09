@@ -4,6 +4,6 @@ from . import views
 urlpatterns = [
   path('movies/', views.MovieListCreateView.as_view(), name='movie-list'),
   path('movies/<uuid:pk>/', views.MovieDetailView.as_view(), name='movie-detail'),
-  path('movies/upload/', views.MovieUploadView.as_view(), name='movie-upload'),
-  path('movies/<uuid:pk>/images/', views.MovieImageView.as_view(), name='movie-image-list'),
+  path('movies/upload/', views.MoviePosterView.as_view(), name='movie-poster'),
+  path('movies/<uuid:pk>/poster/', views.MoviePosterDetailView.as_view(), name='movie-poster-list'),
 ]
