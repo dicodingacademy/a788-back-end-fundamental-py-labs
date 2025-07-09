@@ -24,7 +24,6 @@ def get_minio_client():
         secure=False
     )
 
-
 bucket_name = os.getenv('MINIO_BUCKET_NAME')
 CACHE_KEY_LIST = "movie_list"
 CACHE_KEY_DETAIL = "movie_detail_{}"
