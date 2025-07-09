@@ -24,7 +24,7 @@ class MovieDetailView(APIView):
         try:
             movie = Movie.objects.get(pk=pk)
             self.check_object_permissions(self.request, movie)
-            return Movie
+            return movie
         except Movie.DoesNotExist:
             raise Http404
         
