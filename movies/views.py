@@ -15,12 +15,13 @@ from .serializers import MovieSerializer, MovieImageSerializer
 from minio import Minio
 from django.core.cache import cache
 
-minioClient = Minio(
-endpoint=os.getenv('MINIO_ENDPOINT_URL'),
-    access_key=os.getenv('MINIO_ACCESS_KEY'),
-    secret_key=os.getenv('MINIO_SECRET_KEY'),
-    secure= False
-)
+def get_minio_client():
+    return Minio(
+        endpoint=os.getenv('MINIO_ENDPOINT_URL'),
+        access_key=os.getenv('MINIO_ACCESS_KEY'),
+        secret_key=os.getenv('MINIO_SECRET_KEY'),
+        secure=False
+    )
 
 bucket_name = os.getenv('MINIO_BUCKET_NAME')
 CACHE_KEY_LIST = "movie_list"
@@ -126,7 +127,8 @@ class MovieUploadView(APIView):
 
             try:
                 object_name = f"{serializer.instance.image.name}"
-                minioClient.fput_object(bucket_name, object_name, temp_file_path, content_type=file.content_type)
+                client = get_minio_client()
+                client.fput_object(bucket_name, object_name, temp_file_path, content_type=file.content_type)
             except Exception as e:
                 return Response(
                     {"error": f"Upload to Minio failed: {str(e)}"},
@@ -147,7 +149,8 @@ class MovieImageView(APIView):
 
         serialized_images = []
         for image in images:
-            presigned_url = minioClient.presigned_get_object(
+            client = get_minio_client()
+            presigned_url = client.presigned_get_object(
                 bucket_name,
                 image.image.name,
                 response_headers={"response-content-type": "image/jpeg"}
