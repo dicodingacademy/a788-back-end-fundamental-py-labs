@@ -13,12 +13,13 @@ from .models import Movie
 from .serializers import MovieSerializer, MovieImageSerializer
 from minio import Minio
 
-minioClient = Minio(
-endpoint=os.getenv('MINIO_ENDPOINT_URL'),
-    access_key=os.getenv('MINIO_ACCESS_KEY'),
-    secret_key=os.getenv('MINIO_SECRET_KEY'),
-    secure= False
-)
+def get_minio_client():
+    return Minio(
+        endpoint=os.getenv('MINIO_ENDPOINT_URL'),
+        access_key=os.getenv('MINIO_ACCESS_KEY'),
+        secret_key=os.getenv('MINIO_SECRET_KEY'),
+        secure=False
+    )
 
 bucket_name = os.getenv('MINIO_BUCKET_NAME')
 
